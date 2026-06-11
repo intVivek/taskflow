@@ -8,6 +8,7 @@ export interface TaskParams {
   sort?: string;
   order?: string;
   page?: number;
+  scope?: string;
 }
 
 const DEFAULTS: Required<TaskParams> = {
@@ -16,10 +17,11 @@ const DEFAULTS: Required<TaskParams> = {
   sort: "created_at",
   order: "desc",
   page: 1,
+  scope: "",
 };
 
 // Stable serialization order
-const KEY_ORDER: (keyof TaskParams)[] = ["status", "q", "sort", "order", "page"];
+const KEY_ORDER: (keyof TaskParams)[] = ["status", "q", "sort", "order", "page", "scope"];
 
 /**
  * Pure function: merges patch into current params, resets page to 1 when any
@@ -80,6 +82,7 @@ export function useTaskParams() {
     sort: searchParams.get("sort") ?? "created_at",
     order: searchParams.get("order") ?? "desc",
     page,
+    scope: searchParams.get("scope") ?? "",
   };
 
   function set(patch: Partial<TaskParams>) {
