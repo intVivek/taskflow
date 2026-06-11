@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDueDate } from "./due-date";
 import { EditTaskDialog } from "./task-dialog";
-import { Pencil } from "lucide-react";
+import { DeleteConfirm } from "./delete-confirm";
+import { useToggleComplete } from "@/hooks/use-task-mutations";
+import { Check, Pencil } from "lucide-react";
 
 const PRIORITY_LABEL: Record<string, string> = {
   low: "Low",
@@ -28,48 +30,95 @@ const TONE_CLASSES: Record<string, string> = {
 
 interface TaskRowProps {
   task: Task;
+  onOpenPanel?: (task: Task) => void;
 }
 
-export function TaskRow({ task }: TaskRowProps) {
+export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
   const due = formatDueDate(task.due_date, task.status);
   const [editOpen, setEditOpen] = useState(false);
+  const toggleMutation = useToggleComplete();
+
+  const isDone = task.status === "done";
+  // Only disable this row's checkbox while THIS row's toggle is pending
+  const isTogglePending =
+    toggleMutation.isPending &&
+    // variables is the Task passed to mutate
+    (toggleMutation.variables as Task | undefined)?.id === task.id;
+
+  function handleRowClick() {
+    onOpenPanel?.(task);
+  }
+
+  function handleRowKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if ((e.key === "Enter" || e.key === " ") && !editOpen) {
+      e.preventDefault();
+      onOpenPanel?.(task);
+    }
+  }
 
   return (
     <>
       <div
-        className="
+        role={onOpenPanel ? "button" : undefined}
+        tabIndex={onOpenPanel ? 0 : undefined}
+        aria-label={onOpenPanel ? `Open task: ${task.title}` : undefined}
+        onClick={handleRowClick}
+        onKeyDown={onOpenPanel ? handleRowKeyDown : undefined}
+        className={`
           group flex items-center gap-3 px-4 py-3
           border-b border-border last:border-b-0
           hover:bg-raised transition-colors duration-100
           min-h-[48px]
-        "
+          ${onOpenPanel ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2" : ""}
+        `}
       >
-        {/* Checkbox placeholder circle */}
+        {/* Toggle checkbox */}
         <button
           type="button"
-          disabled
-          aria-label="Toggle complete (coming soon)"
-          className="
+          aria-label={isDone ? "Mark incomplete" : "Mark complete"}
+          aria-pressed={isDone}
+          disabled={isTogglePending}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleMutation.mutate(task);
+          }}
+          className={`
             shrink-0 w-[18px] h-[18px] rounded-full
-            border-2 border-border-strong
-            bg-transparent
-            disabled:cursor-not-allowed
-            transition-colors duration-150
-            group-hover:border-border-strong
-          "
-        />
+            border-2 flex items-center justify-center
+            transition-all duration-150
+            focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
+            disabled:opacity-50 disabled:cursor-not-allowed
+            cursor-pointer
+            ${isDone
+              ? "bg-accent border-accent"
+              : "bg-transparent border-border-strong hover:border-accent group-hover:border-border-strong"
+            }
+          `}
+        >
+          {isDone && (
+            <Check
+              size={10}
+              strokeWidth={3}
+              className="text-accent-fg"
+              style={{
+                animation: "checkPop 150ms cubic-bezier(0.34, 1.56, 0.64, 1) both",
+              }}
+            />
+          )}
+        </button>
 
         {/* Title */}
         <span
           className={`
             flex-1 min-w-0 text-sm truncate
-            ${task.status === "done" ? "line-through text-text-muted" : "text-text"}
+            transition-all duration-150
+            ${isDone ? "line-through text-text-muted" : "text-text"}
           `}
         >
           {task.title}
         </span>
 
-        {/* Right side: chips + edit action */}
+        {/* Right side: chips + hover actions */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Due date chip */}
           {due && (
@@ -93,21 +142,32 @@ export function TaskRow({ task }: TaskRowProps) {
             {STATUS_LABEL[task.status] ?? task.status}
           </Badge>
 
-          {/* Edit button — visible on hover / focus-within */}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            aria-label="Edit task"
-            onClick={() => setEditOpen(true)}
+          {/* Hover actions cluster */}
+          <div
             className="
+              flex items-center gap-0.5
               opacity-0 group-hover:opacity-100 group-focus-within:opacity-100
               transition-opacity duration-100
-              px-1.5! h-6!
             "
           >
-            <Pencil size={12} />
-          </Button>
+            {/* Edit button */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label="Edit task"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditOpen(true);
+              }}
+              className="px-1.5! h-6!"
+            >
+              <Pencil size={12} />
+            </Button>
+
+            {/* Delete with confirmation */}
+            <DeleteConfirm taskId={task.id} />
+          </div>
         </div>
       </div>
 
@@ -116,6 +176,14 @@ export function TaskRow({ task }: TaskRowProps) {
         open={editOpen}
         onClose={() => setEditOpen(false)}
       />
+
+      {/* Inline keyframe for check animation */}
+      <style>{`
+        @keyframes checkPop {
+          from { transform: scale(0); opacity: 0; }
+          to   { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
     </>
   );
 }

@@ -5,6 +5,7 @@ import { useTaskParams } from "@/hooks/use-task-params";
 import { useTasks } from "@/hooks/use-tasks";
 import { ListControls } from "./list-controls";
 import { TaskRow } from "./task-row";
+import { TaskPanel } from "./task-panel";
 import { Pagination } from "./pagination";
 import {
   SkeletonRows,
@@ -15,15 +16,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CreateTaskDialog } from "./task-dialog";
+import type { Task } from "@/lib/types";
 
 export function TaskList() {
   const params = useTaskParams();
   const { status, q, sort, order, page } = params;
-  const { data, isLoading, isError, error, refetch, isFetching } = useTasks({ status, q, sort, order, page });
+  const { data, isLoading, isError, error, refetch, isFetching } = useTasks({
+    status,
+    q,
+    sort,
+    order,
+    page,
+  });
   const [createOpen, setCreateOpen] = useState(false);
+  // Snapshot of the task the panel was opened with
+  const [openTask, setOpenTask] = useState<Task | null>(null);
 
   const tasks = data?.data ?? [];
   const meta = data?.meta;
+
+  // Derive fresh task data from the current query result; fall back to snapshot
+  // so the panel still shows content while a delete-triggered refetch settles.
+  const panelTask = openTask
+    ? (tasks.find((t) => t.id === openTask.id) ?? openTask)
+    : null;
 
   return (
     <div className="space-y-4">
@@ -57,10 +73,7 @@ export function TaskList() {
         {isLoading ? (
           <SkeletonRows n={8} />
         ) : isError ? (
-          <ErrorState
-            message={error?.message}
-            onRetry={() => refetch()}
-          />
+          <ErrorState message={error?.message} onRetry={() => refetch()} />
         ) : tasks.length === 0 ? (
           params.hasActiveFilters ? (
             <EmptyNoMatches />
@@ -68,7 +81,13 @@ export function TaskList() {
             <EmptyNoTasks onNewTask={() => setCreateOpen(true)} />
           )
         ) : (
-          tasks.map((task) => <TaskRow key={task.id} task={task} />)
+          tasks.map((task) => (
+            <TaskRow
+              key={task.id}
+              task={task}
+              onOpenPanel={setOpenTask}
+            />
+          ))
         )}
       </div>
 
@@ -81,6 +100,12 @@ export function TaskList() {
 
       {/* Create dialog */}
       <CreateTaskDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+
+      {/* Task detail panel — rendered once at list level */}
+      <TaskPanel
+        task={panelTask}
+        onClose={() => setOpenTask(null)}
+      />
     </div>
   );
 }
