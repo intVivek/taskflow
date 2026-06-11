@@ -266,7 +266,7 @@ rival/
 │   │   └── lib/          # API client, zod schemas, activity formatter, types
 │   └── e2e/              # Playwright specs (not in CI)
 ├── docs/
-│   ├── screenshots/
+│   └── screenshots/
 └── docker-compose.yml
 ```
 
@@ -376,8 +376,3 @@ These require the full stack running. They are not wired into CI.
 8. **No rate limiting, no refresh-token rotation.** Out of scope for this assessment. Production additions: a rate-limiting middleware (e.g. per-IP sliding window) and short-lived access tokens with a separate refresh-token flow.
 
 9. **Render free tier cold starts (~50 s).** The first request to the Render-hosted API after a period of inactivity will be slow while the container spins up. This is a hosting-tier limitation, not an application bug.
-
----
-
-## Project process
-
