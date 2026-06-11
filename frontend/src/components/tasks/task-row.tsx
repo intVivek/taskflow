@@ -8,6 +8,7 @@ import { formatDueDate } from "./due-date";
 import { EditTaskDialog } from "./task-dialog";
 import { DeleteConfirm } from "./delete-confirm";
 import { useToggleComplete } from "@/hooks/use-task-mutations";
+import { useUser } from "@/hooks/use-user";
 import { Check, Pencil } from "lucide-react";
 
 const PRIORITY_LABEL: Record<string, string> = {
@@ -37,6 +38,7 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
   const due = formatDueDate(task.due_date, task.status);
   const [editOpen, setEditOpen] = useState(false);
   const toggleMutation = useToggleComplete();
+  const { data: me } = useUser();
 
   const isDone = task.status === "done";
   // Only disable this row's checkbox while THIS row's toggle is pending
@@ -44,6 +46,9 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
     toggleMutation.isPending &&
     // variables is the Task passed to mutate
     (toggleMutation.variables as Task | undefined)?.id === task.id;
+
+  // A task is "foreign" if it has an owner_email and doesn't belong to the current user
+  const isForeign = Boolean(task.owner_email && me && task.user_id !== me.id);
 
   function handleRowClick() {
     onOpenPanel?.(task);
@@ -77,12 +82,20 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
           {/* Toggle checkbox — expanded hit area via relative+after pseudo-element */}
           <button
             type="button"
-            aria-label={isDone ? "Mark incomplete" : "Mark complete"}
-            aria-pressed={isDone}
-            disabled={isTogglePending}
+            aria-label={
+              isForeign
+                ? "View only — not your task"
+                : isDone
+                ? "Mark incomplete"
+                : "Mark complete"
+            }
+            aria-pressed={isForeign ? undefined : isDone}
+            aria-disabled={isForeign ? true : undefined}
+            title={isForeign ? "View only — not your task" : undefined}
+            disabled={isTogglePending || isForeign}
             onClick={(e) => {
               e.stopPropagation();
-              toggleMutation.mutate(task);
+              if (!isForeign) toggleMutation.mutate(task);
             }}
             className={`
               relative shrink-0 w-[18px] h-[18px] rounded-full
@@ -91,7 +104,7 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
               after:absolute after:inset-0 after:m-[-13px] after:content-['']
               focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
               disabled:opacity-50 disabled:cursor-not-allowed
-              cursor-pointer
+              ${isForeign ? "cursor-not-allowed" : "cursor-pointer"}
               ${isDone
                 ? "bg-accent border-accent"
                 : "bg-transparent border-border-strong hover:border-accent group-hover:border-border-strong"
@@ -122,33 +135,35 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
             {task.title}
           </span>
 
-          {/* Hover actions cluster — always visible on small screens, hover on larger */}
-          <div
-            className="
-              flex items-center gap-0.5 shrink-0
-              sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100
-              transition-opacity duration-100
-            "
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Edit button — min 44px tap target */}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              aria-label="Edit task"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditOpen(true);
-              }}
-              className="px-2.5! h-11! sm:px-1.5! sm:h-6!"
+          {/* Hover actions cluster — hidden for foreign tasks */}
+          {!isForeign && (
+            <div
+              className="
+                flex items-center gap-0.5 shrink-0
+                sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100
+                transition-opacity duration-100
+              "
+              onClick={(e) => e.stopPropagation()}
             >
-              <Pencil size={12} />
-            </Button>
+              {/* Edit button — min 44px tap target */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label="Edit task"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditOpen(true);
+                }}
+                className="px-2.5! h-11! sm:px-1.5! sm:h-6!"
+              >
+                <Pencil size={12} />
+              </Button>
 
-            {/* Delete with confirmation */}
-            <DeleteConfirm taskId={task.id} />
-          </div>
+              {/* Delete with confirmation */}
+              <DeleteConfirm taskId={task.id} />
+            </div>
+          )}
         </div>
 
         {/* Row 2: badges — always visible, wraps naturally */}
@@ -174,6 +189,20 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
           <Badge variant={task.status as "todo" | "in_progress" | "done"}>
             {STATUS_LABEL[task.status] ?? task.status}
           </Badge>
+
+          {/* Owner chip — only shown in scope=all view */}
+          {task.owner_email && (
+            <span
+              title={task.owner_email}
+              className="
+                text-xs font-medium px-2 py-0.5 rounded-md whitespace-nowrap
+                text-text-muted bg-raised border border-border
+                max-w-[20ch] truncate
+              "
+            >
+              {task.owner_email}
+            </span>
+          )}
         </div>
       </div>
 
@@ -182,7 +211,6 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
         open={editOpen}
         onClose={() => setEditOpen(false)}
       />
-
     </>
   );
 }
