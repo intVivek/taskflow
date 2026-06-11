@@ -49,11 +49,14 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
     }
   }, [open]);
 
-  // Focus autofocus element (or first focusable) when dialog opens
+  // Move focus into the dialog when it opens. React handles autoFocus
+  // imperatively (no DOM attribute), so if a child already claimed focus
+  // during mount, leave it alone; otherwise focus the first focusable.
   useEffect(() => {
     if (!open) return;
     const panel = panelRef.current;
     if (!panel) return;
+    if (document.activeElement && panel.contains(document.activeElement)) return;
     const el =
       panel.querySelector<HTMLElement>("[autofocus]") ??
       panel.querySelector<HTMLElement>(FOCUSABLE);
