@@ -15,16 +15,26 @@ export async function GET(req: NextRequest) {
   const cookie = req.headers.get("cookie") ?? "";
   const url = `${API_URL}/events`;
 
-  const backendRes = await fetch(url, {
-    headers: {
-      cookie,
-      accept: "text/event-stream",
-      "cache-control": "no-cache",
-    },
-    // Node.js fetch: disable response body compression so we get raw bytes
-    // @ts-expect-error — Next.js uses Node.js fetch which accepts `compress`
-    compress: false,
-  });
+  let backendRes: Response;
+  try {
+    backendRes = await fetch(url, {
+      headers: {
+        cookie,
+        accept: "text/event-stream",
+        "cache-control": "no-cache",
+      },
+      // Node.js fetch: disable response body compression so we get raw bytes
+      // @ts-expect-error — Next.js uses Node.js fetch which accepts `compress`
+      compress: false,
+    });
+  } catch {
+    // Backend unreachable — EventSource retries on any non-200, so a clean
+    // 502 keeps the reconnect loop deterministic.
+    return new Response(JSON.stringify({ error: "upstream unavailable" }), {
+      status: 502,
+      headers: { "content-type": "application/json" },
+    });
+  }
 
   if (!backendRes.ok || !backendRes.body) {
     return new Response(JSON.stringify({ error: "upstream error" }), {
