@@ -42,6 +42,7 @@ export function useUpdateTask() {
 
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["activity"] });
     },
   });
 }
@@ -76,6 +77,7 @@ export function useToggleComplete() {
 
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["activity"] });
     },
   });
 }
@@ -110,6 +112,7 @@ export function useDeleteTask() {
 
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["activity"] });
     },
   });
 }

@@ -26,6 +26,7 @@ export function CreateTaskDialog({ open, onClose }: CreateTaskDialogProps) {
       api<Task>("/tasks", { method: "POST", body: v }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
+      qc.invalidateQueries({ queryKey: ["activity"] });
       toast.success("Task created");
       setServerError(null);
       onClose();
