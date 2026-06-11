@@ -1,0 +1,16 @@
+# Render blueprint — deploys the Go API from backend/Dockerfile.
+# DATABASE_URL is provided manually (Neon connection string) at create time.
+services:
+  - type: web
+    name: taskflow-api
+    runtime: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: DATABASE_URL
+        sync: false # paste the Neon connection string in the dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENV
+        value: production
