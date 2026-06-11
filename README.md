@@ -13,7 +13,7 @@ Full-stack task management application — Go 1.25 API, Next.js 15 frontend, Pos
 
 | Role | Email | Password | What you'll see |
 |------|-------|----------|-----------------|
-| User | `demo@taskflow.dev` | `taskflow-demo-123` | 12 sample tasks with activity history |
+| User | `demo@taskflow.dev` | `taskflow-demo-123` | 50 sample tasks with activity history (3 pages) |
 | Admin | `admin@taskflow.dev` | `taskflow-demo-123` | "All tasks" toggle to view every user's tasks |
 
 > Render free tier cold-starts take ~50 s; the first request after inactivity will be slow.
