@@ -33,7 +33,7 @@ export function AppHeader() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {user?.email && (
-            <span className="text-xs text-text-muted hidden sm:inline truncate max-w-[180px]">
+            <span className="text-xs text-text-muted max-[479px]:hidden inline truncate max-w-[180px]">
               {user.email}
             </span>
           )}
@@ -42,6 +42,7 @@ export function AppHeader() {
             size="sm"
             loading={loggingOut}
             onClick={handleLogout}
+            className="h-11 sm:h-8 px-3"
           >
             Logout
           </Button>

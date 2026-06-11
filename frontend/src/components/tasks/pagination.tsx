@@ -29,17 +29,21 @@ export function Pagination({ meta }: PaginationProps) {
           size="sm"
           disabled={currentPage <= 1}
           onClick={() => set({ page: currentPage - 1 })}
+          aria-label="Previous page"
+          className="h-11 sm:h-7 px-3 sm:px-2.5"
         >
           <ChevronLeft size={14} />
-          Prev
+          <span className="hidden sm:inline">Prev</span>
         </Button>
         <Button
           variant="secondary"
           size="sm"
           disabled={currentPage >= meta.total_pages}
           onClick={() => set({ page: currentPage + 1 })}
+          aria-label="Next page"
+          className="h-11 sm:h-7 px-3 sm:px-2.5"
         >
-          Next
+          <span className="hidden sm:inline">Next</span>
           <ChevronRight size={14} />
         </Button>
       </div>

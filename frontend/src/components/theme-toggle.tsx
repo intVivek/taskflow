@@ -16,7 +16,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <span
-        className="inline-flex items-center justify-center h-8 w-8"
+        className="inline-flex items-center justify-center h-11 w-11 sm:h-8 sm:w-8"
         aria-hidden="true"
       />
     );
@@ -30,7 +30,9 @@ export function ThemeToggle() {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label="Toggle theme"
       className="
-        inline-flex items-center justify-center h-8 w-8 rounded-md
+        inline-flex items-center justify-center
+        h-11 w-11 sm:h-8 sm:w-8
+        rounded-md
         text-text-secondary
         border border-border
         bg-surface

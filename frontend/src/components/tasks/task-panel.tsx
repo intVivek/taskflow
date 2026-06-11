@@ -184,9 +184,10 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
             disabled={isTogglePending}
             onClick={() => toggleMutation.mutate(task)}
             className={`
-              shrink-0 mt-0.5 w-[18px] h-[18px] rounded-full
+              relative shrink-0 mt-0.5 w-[18px] h-[18px] rounded-full
               border-2 flex items-center justify-center
               transition-all duration-150
+              after:absolute after:inset-0 after:m-[-13px] after:content-['']
               focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
               disabled:opacity-50 disabled:cursor-not-allowed
               cursor-pointer
@@ -225,7 +226,7 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
             onClick={onClose}
             className="
               shrink-0 inline-flex items-center justify-center
-              w-7 h-7 rounded-md
+              w-11 h-11 sm:w-7 sm:h-7 rounded-md
               text-text-muted
               hover:bg-raised hover:text-text
               focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
@@ -267,7 +268,7 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
               Description
             </span>
             {task.description ? (
-              <p className="text-sm text-text whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm text-text whitespace-pre-wrap wrap-break-word leading-relaxed">
                 {task.description}
               </p>
             ) : (

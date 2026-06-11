@@ -37,7 +37,7 @@ export function formatDueDate(
   }
 
   if (diffDays === 1) {
-    return { label: "Tomorrow", tone: "muted" };
+    return { label: "Tomorrow", tone: isDone ? "muted" : "warning" };
   }
 
   // Format as "Mon DD" e.g. "Jun 20"

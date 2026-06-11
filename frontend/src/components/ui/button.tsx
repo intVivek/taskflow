@@ -67,6 +67,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ${sizeClasses[size]}
           ${className}
         `}
+        aria-busy={loading || undefined}
         {...props}
       >
         {loading && <Spinner size={12} />}

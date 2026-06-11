@@ -66,8 +66,16 @@ export function ListControls() {
 
   return (
     <div className="space-y-3">
-      {/* Status tabs */}
-      <div role="tablist" aria-label="Filter by status" className="flex items-center border-b border-border">
+      {/* Status tabs — horizontal scroll with hidden scrollbar on small screens */}
+      <div
+        role="tablist"
+        aria-label="Filter by status"
+        className="
+          flex items-center border-b border-border
+          overflow-x-auto
+          scrollbar-none [&::-webkit-scrollbar]:hidden
+        "
+      >
         {STATUS_TABS.map((tab) => {
           const isActive = (status ?? "") === tab.value;
           return (
@@ -78,8 +86,11 @@ export function ListControls() {
               aria-selected={isActive}
               onClick={() => set({ status: tab.value })}
               className={`
+                shrink-0
                 px-3 pb-2.5 pt-1 text-sm font-medium transition-colors duration-150 cursor-pointer
                 border-b-2 -mb-px
+                /* Ensure minimum 44px tap height on touch */
+                min-h-[44px] flex items-center
                 ${
                   isActive
                     ? "border-accent text-text"
@@ -93,9 +104,9 @@ export function ListControls() {
         })}
       </div>
 
-      {/* Search + Sort row */}
-      <div className="flex items-center gap-2">
-        {/* Search */}
+      {/* Search + Sort row — stacks to search-full-width on mobile */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        {/* Search — full width on its own line on mobile */}
         <div className="relative flex-1 min-w-0">
           <Search
             size={14}
@@ -109,7 +120,7 @@ export function ListControls() {
             placeholder="Search tasks…"
             aria-label="Search tasks"
             className="
-              w-full h-8 pl-8 pr-8 rounded-md text-sm
+              w-full h-9 sm:h-8 pl-8 pr-8 rounded-md text-sm
               bg-surface text-text
               border border-border
               placeholder:text-text-muted
@@ -127,6 +138,8 @@ export function ListControls() {
                 absolute right-2 top-1/2 -translate-y-1/2
                 text-text-muted hover:text-text
                 transition-colors duration-150 cursor-pointer
+                /* min 44px tap target */
+                p-2 -m-2
               "
             >
               <X size={13} />
@@ -134,48 +147,52 @@ export function ListControls() {
           )}
         </div>
 
-        {/* Sort select */}
-        <select
-          value={activeSort}
-          onChange={(e) => set({ sort: e.target.value })}
-          aria-label="Sort by"
-          className="
-            h-8 px-2.5 rounded-md text-sm
-            bg-surface text-text
-            border border-border
-            hover:border-border-strong
-            focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-0
-            transition-colors duration-150 cursor-pointer
-          "
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        {/* Sort controls row — always in one line */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Sort select */}
+          <select
+            value={activeSort}
+            onChange={(e) => set({ sort: e.target.value })}
+            aria-label="Sort by"
+            className="
+              flex-1 sm:flex-none
+              h-9 sm:h-8 px-2.5 rounded-md text-sm
+              bg-surface text-text
+              border border-border
+              hover:border-border-strong
+              focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-0
+              transition-colors duration-150 cursor-pointer
+            "
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
 
-        {/* Direction toggle */}
-        <button
-          type="button"
-          onClick={toggleOrder}
-          aria-label={activeOrder === "asc" ? "Sort ascending" : "Sort descending"}
-          title={activeOrder === "asc" ? "Ascending" : "Descending"}
-          className="
-            inline-flex items-center justify-center h-8 w-8 rounded-md
-            bg-surface text-text-secondary
-            border border-border
-            hover:bg-raised hover:text-text hover:border-border-strong
-            transition-colors duration-150 cursor-pointer
-            focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
-          "
-        >
-          {activeOrder === "asc" ? (
-            <ArrowUp size={14} />
-          ) : (
-            <ArrowDown size={14} />
-          )}
-        </button>
+          {/* Direction toggle — min 44px tap target */}
+          <button
+            type="button"
+            onClick={toggleOrder}
+            aria-label={activeOrder === "asc" ? "Sort ascending" : "Sort descending"}
+            title={activeOrder === "asc" ? "Ascending" : "Descending"}
+            className="
+              inline-flex items-center justify-center h-9 sm:h-8 w-9 sm:w-8 rounded-md
+              bg-surface text-text-secondary
+              border border-border
+              hover:bg-raised hover:text-text hover:border-border-strong
+              transition-colors duration-150 cursor-pointer
+              focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
+            "
+          >
+            {activeOrder === "asc" ? (
+              <ArrowUp size={14} />
+            ) : (
+              <ArrowDown size={14} />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

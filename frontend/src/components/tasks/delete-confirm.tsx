@@ -143,7 +143,7 @@ export function DeleteConfirm({
         changeOpen(true);
       }}
       className={`
-        inline-flex items-center justify-center
+        relative inline-flex items-center justify-center
         w-6 h-6 rounded-md
         text-text-muted
         border border-transparent
@@ -151,6 +151,7 @@ export function DeleteConfirm({
         focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
         transition-colors duration-150
         cursor-pointer
+        after:absolute after:inset-0 after:m-[-11px] after:content-['']
         ${triggerClassName}
       `}
     >

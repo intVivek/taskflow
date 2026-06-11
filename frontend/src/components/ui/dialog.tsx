@@ -104,7 +104,7 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
       aria-hidden={!open}
     >
       {/* Backdrop */}
@@ -143,7 +143,7 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
             size="sm"
             onClick={onClose}
             aria-label="Close dialog"
-            className="px-1.5! h-7!"
+            className="px-3! h-11! sm:px-1.5! sm:h-7!"
           >
             <X size={14} />
           </Button>

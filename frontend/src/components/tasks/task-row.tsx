@@ -66,61 +66,93 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
         onClick={handleRowClick}
         onKeyDown={onOpenPanel ? handleRowKeyDown : undefined}
         className={`
-          group flex items-center gap-3 px-4 py-3
+          group flex flex-col gap-1.5 px-3 sm:px-4 py-2.5
           border-b border-border last:border-b-0
           hover:bg-raised transition-colors duration-100
-          min-h-[48px]
           ${onOpenPanel ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-accent focus-visible:-outline-offset-2" : ""}
         `}
       >
-        {/* Toggle checkbox */}
-        <button
-          type="button"
-          aria-label={isDone ? "Mark incomplete" : "Mark complete"}
-          aria-pressed={isDone}
-          disabled={isTogglePending}
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleMutation.mutate(task);
-          }}
-          className={`
-            shrink-0 w-[18px] h-[18px] rounded-full
-            border-2 flex items-center justify-center
-            transition-all duration-150
-            focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
-            disabled:opacity-50 disabled:cursor-not-allowed
-            cursor-pointer
-            ${isDone
-              ? "bg-accent border-accent"
-              : "bg-transparent border-border-strong hover:border-accent group-hover:border-border-strong"
-            }
-          `}
-        >
-          {isDone && (
-            <Check
-              size={10}
-              strokeWidth={3}
-              className="text-accent-fg"
-              style={{
-                animation: "checkPop 150ms cubic-bezier(0.34, 1.56, 0.64, 1) both",
+        {/* Row 1: checkbox + title + actions */}
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Toggle checkbox — expanded hit area via relative+after pseudo-element */}
+          <button
+            type="button"
+            aria-label={isDone ? "Mark incomplete" : "Mark complete"}
+            aria-pressed={isDone}
+            disabled={isTogglePending}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleMutation.mutate(task);
+            }}
+            className={`
+              relative shrink-0 w-[18px] h-[18px] rounded-full
+              border-2 flex items-center justify-center
+              transition-all duration-150
+              after:absolute after:inset-0 after:m-[-13px] after:content-['']
+              focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
+              disabled:opacity-50 disabled:cursor-not-allowed
+              cursor-pointer
+              ${isDone
+                ? "bg-accent border-accent"
+                : "bg-transparent border-border-strong hover:border-accent group-hover:border-border-strong"
+              }
+            `}
+          >
+            {isDone && (
+              <Check
+                size={10}
+                strokeWidth={3}
+                className="text-accent-fg"
+                style={{
+                  animation: "checkPop 150ms cubic-bezier(0.34, 1.56, 0.64, 1) both",
+                }}
+              />
+            )}
+          </button>
+
+          {/* Title */}
+          <span
+            title={task.title}
+            className={`
+              flex-1 min-w-0 text-sm truncate
+              transition-all duration-150
+              ${isDone ? "line-through text-text-muted" : "text-text"}
+            `}
+          >
+            {task.title}
+          </span>
+
+          {/* Hover actions cluster — always visible on small screens, hover on larger */}
+          <div
+            className="
+              flex items-center gap-0.5 shrink-0
+              sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100
+              transition-opacity duration-100
+            "
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Edit button — min 44px tap target */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label="Edit task"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditOpen(true);
               }}
-            />
-          )}
-        </button>
+              className="px-2.5! h-11! sm:px-1.5! sm:h-6!"
+            >
+              <Pencil size={12} />
+            </Button>
 
-        {/* Title */}
-        <span
-          className={`
-            flex-1 min-w-0 text-sm truncate
-            transition-all duration-150
-            ${isDone ? "line-through text-text-muted" : "text-text"}
-          `}
-        >
-          {task.title}
-        </span>
+            {/* Delete with confirmation */}
+            <DeleteConfirm taskId={task.id} />
+          </div>
+        </div>
 
-        {/* Right side: chips + hover actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Row 2: badges — always visible, wraps naturally */}
+        <div className="flex items-center gap-1.5 flex-wrap ml-8 sm:ml-7">
           {/* Due date chip */}
           {due && (
             <span
@@ -142,33 +174,6 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
           <Badge variant={task.status as "todo" | "in_progress" | "done"}>
             {STATUS_LABEL[task.status] ?? task.status}
           </Badge>
-
-          {/* Hover actions cluster */}
-          <div
-            className="
-              flex items-center gap-0.5
-              opacity-0 group-hover:opacity-100 group-focus-within:opacity-100
-              transition-opacity duration-100
-            "
-          >
-            {/* Edit button */}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              aria-label="Edit task"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditOpen(true);
-              }}
-              className="px-1.5! h-6!"
-            >
-              <Pencil size={12} />
-            </Button>
-
-            {/* Delete with confirmation */}
-            <DeleteConfirm taskId={task.id} />
-          </div>
         </div>
       </div>
 
