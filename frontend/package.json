@@ -22,8 +22,8 @@
     "sonner": "^2.0.7",
     "zod": "^4.4.3"
   },
-  "optionalDependencies": {
-    "@tailwindcss/oxide-darwin-arm64": "^4.3.0"
+  "engines": {
+    "node": ">=20"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
