@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Search, X, ArrowUp, ArrowDown } from "lucide-react";
 import { useTaskParams } from "@/hooks/use-task-params";
+import { useUser } from "@/hooks/use-user";
 
 const STATUS_TABS = [
   { label: "All", value: "" },
@@ -18,7 +19,9 @@ const SORT_OPTIONS = [
 ] as const;
 
 export function ListControls() {
-  const { status, q, sort, order, set } = useTaskParams();
+  const { status, q, sort, order, scope, set } = useTaskParams();
+  const { data: me } = useUser();
+  const isAdmin = me?.role === "admin";
 
   // Local search state — synced from URL, debounced write back
   const [searchValue, setSearchValue] = useState(q ?? "");
@@ -59,9 +62,14 @@ export function ListControls() {
 
   const activeSort = sort ?? "created_at";
   const activeOrder = order ?? "desc";
+  const isAllTasks = scope === "all";
 
   function toggleOrder() {
     set({ order: activeOrder === "asc" ? "desc" : "asc" });
+  }
+
+  function handleAllTasksToggle() {
+    set({ scope: isAllTasks ? "" : "all" });
   }
 
   return (
@@ -192,6 +200,38 @@ export function ListControls() {
               <ArrowDown size={14} />
             )}
           </button>
+
+          {/* Admin-only: All tasks toggle */}
+          {isAdmin && (
+            <label
+              className="flex items-center gap-1.5 cursor-pointer select-none shrink-0"
+              title="Show tasks from all users"
+            >
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isAllTasks}
+                aria-label="All tasks"
+                onClick={handleAllTasksToggle}
+                className={`
+                  relative inline-flex items-center h-5 w-9 rounded-full
+                  border-2 border-transparent
+                  transition-colors duration-150 cursor-pointer
+                  focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
+                  ${isAllTasks ? "bg-accent" : "bg-border-strong"}
+                `}
+              >
+                <span
+                  className={`
+                    inline-block h-3.5 w-3.5 rounded-full bg-white shadow
+                    transition-transform duration-150
+                    ${isAllTasks ? "translate-x-4" : "translate-x-0.5"}
+                  `}
+                />
+              </button>
+              <span className="text-xs font-medium text-text-muted">All tasks</span>
+            </label>
+          )}
         </div>
       </div>
     </div>
