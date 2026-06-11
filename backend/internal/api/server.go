@@ -32,4 +32,10 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /auth/login", s.handleLogin)
 	s.mux.HandleFunc("POST /auth/logout", s.requireAuth(s.handleLogout))
 	s.mux.HandleFunc("GET /auth/me", s.requireAuth(s.handleMe))
+
+	s.mux.HandleFunc("POST /tasks", s.requireAuth(s.handleCreateTask))
+	s.mux.HandleFunc("GET /tasks", s.requireAuth(s.handleListTasks))
+	s.mux.HandleFunc("GET /tasks/{id}", s.requireAuth(s.handleGetTask))
+	s.mux.HandleFunc("PATCH /tasks/{id}", s.requireAuth(s.handleUpdateTask))
+	s.mux.HandleFunc("DELETE /tasks/{id}", s.requireAuth(s.handleDeleteTask))
 }
