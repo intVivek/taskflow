@@ -4,3 +4,4 @@ node_modules/
 .next/
 backend/bin/
 .DS_Store
+backend/api
