@@ -8,12 +8,13 @@ import {
   MouseEvent,
   useState,
 } from "react";
-import { X, Check, Calendar, Clock } from "lucide-react";
+import { X, Check, Calendar, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Task } from "@/lib/types";
 import { formatDueDate } from "./due-date";
 import { useToggleComplete } from "@/hooks/use-task-mutations";
+import { useUser } from "@/hooks/use-user";
 import { DeleteConfirm } from "./delete-confirm";
 import { EditTaskDialog } from "./task-dialog";
 import { ActivityLog } from "./activity-log";
@@ -63,8 +64,12 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const toggleMutation = useToggleComplete();
+  const { data: me } = useUser();
 
   const isOpen = task !== null;
+
+  // A task is "foreign" if it has an owner_email and doesn't belong to the current user
+  const isForeign = Boolean(task && task.owner_email && me && task.user_id !== me.id);
 
   // Body scroll lock
   useEffect(() => {
@@ -180,10 +185,18 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
           {/* Toggle checkbox */}
           <button
             type="button"
-            aria-label={isDone ? "Mark incomplete" : "Mark complete"}
-            aria-pressed={isDone}
-            disabled={isTogglePending}
-            onClick={() => toggleMutation.mutate(task)}
+            aria-label={
+              isForeign
+                ? "View only — not your task"
+                : isDone
+                ? "Mark incomplete"
+                : "Mark complete"
+            }
+            aria-pressed={isForeign ? undefined : isDone}
+            aria-disabled={isForeign ? true : undefined}
+            title={isForeign ? "View only — not your task" : undefined}
+            disabled={isTogglePending || isForeign}
+            onClick={() => { if (!isForeign) toggleMutation.mutate(task); }}
             className={`
               relative shrink-0 mt-0.5 w-[18px] h-[18px] rounded-full
               border-2 flex items-center justify-center
@@ -191,7 +204,7 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
               after:absolute after:inset-0 after:m-[-13px] after:content-['']
               focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2
               disabled:opacity-50 disabled:cursor-not-allowed
-              cursor-pointer
+              ${isForeign ? "cursor-not-allowed" : "cursor-pointer"}
               ${isDone
                 ? "bg-accent border-accent"
                 : "bg-transparent border-border-strong hover:border-accent"
@@ -263,6 +276,22 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
             )}
           </div>
 
+          {/* Owner line — only shown in scope=all view */}
+          {task.owner_email && (
+            <div className="flex items-center gap-2 text-xs text-text-muted">
+              <User size={11} className="shrink-0" />
+              <span>
+                <span className="font-medium">Owner</span>{" "}
+                <span
+                  title={task.owner_email}
+                  className="truncate max-w-[28ch] inline-block align-bottom"
+                >
+                  {task.owner_email}
+                </span>
+              </span>
+            </div>
+          )}
+
           {/* Description */}
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-text-muted uppercase tracking-wide">
@@ -301,26 +330,28 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
           </div>
         </div>
 
-        {/* Footer actions */}
-        <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-border shrink-0">
-          <DeleteConfirm
-            taskId={task.id}
-            onDeleted={onClose}
-            triggerClassName="opacity-100"
-            onOpenChange={setConfirmOpen}
-          />
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditOpen(true);
-            }}
-          >
-            Edit
-          </Button>
-        </div>
+        {/* Footer actions — hidden entirely for foreign tasks */}
+        {!isForeign && (
+          <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-border shrink-0">
+            <DeleteConfirm
+              taskId={task.id}
+              onDeleted={onClose}
+              triggerClassName="opacity-100"
+              onOpenChange={setConfirmOpen}
+            />
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditOpen(true);
+              }}
+            >
+              Edit
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Edit dialog (rendered outside slide-over so it stacks above) */}
@@ -329,7 +360,6 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
         open={editOpen}
         onClose={() => setEditOpen(false)}
       />
-
     </>
   );
 }

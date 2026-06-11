@@ -130,7 +130,11 @@ describe("TaskList", () => {
   // 5. Rejected → error state with Retry; clicking Retry triggers a second api call
   it("shows error state with Retry button; clicking Retry calls api again", async () => {
     const networkError = new Error("Network failure");
-    mockApi.mockRejectedValue(networkError);
+    // /auth/me (useUser) resolves fine; /tasks rejects
+    mockApi.mockImplementation((path: string) => {
+      if (path === "/auth/me") return Promise.resolve({ id: "u1", email: "test@test.com", role: "user", created_at: "" });
+      return Promise.reject(networkError);
+    });
 
     const queryClient = createTestQueryClient();
     renderWithProviders(<TaskList />, { queryClient });
@@ -140,14 +144,15 @@ describe("TaskList", () => {
     const retryButton = screen.getByRole("button", { name: /try again/i });
     expect(retryButton).toBeInTheDocument();
 
-    // api was called once so far (the initial fetch)
-    expect(mockApi).toHaveBeenCalledTimes(1);
+    // Count only the /tasks calls (not /auth/me)
+    const tasksCalls = () => mockApi.mock.calls.filter(([path]: [string]) => path !== "/auth/me");
+    expect(tasksCalls()).toHaveLength(1);
 
-    // Click Retry → triggers a refetch → second api call
+    // Click Retry → triggers a refetch → second /tasks api call
     await userEvent.click(retryButton);
 
     await waitFor(() => {
-      expect(mockApi).toHaveBeenCalledTimes(2);
+      expect(tasksCalls()).toHaveLength(2);
     });
   });
 });
