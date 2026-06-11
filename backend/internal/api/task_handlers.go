@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 	"unicode/utf8"
 
@@ -228,7 +229,66 @@ func (s *Server) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// handleListTasks is a stub; Task 8 implements filter/search/sort/pagination.
 func (s *Server) handleListTasks(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, listEnvelope{Data: []taskDTO{}, Meta: listMeta{Page: 1, Limit: 20}})
+	claims := claimsFrom(r.Context())
+	q := r.URL.Query()
+	fields := map[string]string{}
+
+	status := q.Get("status")
+	if status != "" && !validStatus[status] {
+		fields["status"] = "must be one of: todo, in_progress, done"
+	}
+	sort := q.Get("sort")
+	if sort == "" {
+		sort = "created_at"
+	}
+	if sort != "due_date" && sort != "priority" && sort != "created_at" {
+		fields["sort"] = "must be one of: due_date, priority, created_at"
+	}
+	order := q.Get("order")
+	if order == "" {
+		order = "desc"
+	}
+	if order != "asc" && order != "desc" {
+		fields["order"] = "must be asc or desc"
+	}
+	page := 1
+	if v := q.Get("page"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			fields["page"] = "must be a positive integer"
+		} else {
+			page = n
+		}
+	}
+	limit := 20
+	if v := q.Get("limit"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 || n > 100 {
+			fields["limit"] = "must be between 1 and 100"
+		} else {
+			limit = n
+		}
+	}
+	if len(fields) > 0 {
+		writeValidationError(w, fields)
+		return
+	}
+
+	tasks, total, err := s.st.ListTasks(r.Context(), store.ListTasksParams{
+		UserID: claims.UserID, Status: status, Query: q.Get("q"),
+		Sort: sort, Order: order, Limit: limit, Offset: (page - 1) * limit,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "could not list tasks")
+		return
+	}
+	dtos := make([]taskDTO, len(tasks))
+	for i, t := range tasks {
+		dtos[i] = toDTO(t)
+	}
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
+	writeJSON(w, http.StatusOK, listEnvelope{Data: dtos, Meta: listMeta{
+		Page: page, Limit: limit, Total: total, TotalPages: totalPages,
+	}})
 }
