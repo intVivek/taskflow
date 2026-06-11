@@ -27,4 +27,9 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
+
+	s.mux.HandleFunc("POST /auth/signup", s.handleSignup)
+	s.mux.HandleFunc("POST /auth/login", s.handleLogin)
+	s.mux.HandleFunc("POST /auth/logout", s.requireAuth(s.handleLogout))
+	s.mux.HandleFunc("GET /auth/me", s.requireAuth(s.handleMe))
 }
