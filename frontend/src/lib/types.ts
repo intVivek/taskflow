@@ -21,6 +21,15 @@ export interface User {
   created_at: string;
 }
 
+export interface Attachment {
+  id: string;
+  task_id: string;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  created_at: string;
+}
+
 export interface ListMeta {
   page: number;
   limit: number;

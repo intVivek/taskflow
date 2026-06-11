@@ -18,6 +18,7 @@ import { useUser } from "@/hooks/use-user";
 import { DeleteConfirm } from "./delete-confirm";
 import { EditTaskDialog } from "./task-dialog";
 import { ActivityLog } from "./activity-log";
+import { Attachments } from "./attachments";
 
 const FOCUSABLE =
   'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
@@ -306,6 +307,9 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
               <p className="text-sm text-text-muted italic">No description</p>
             )}
           </div>
+
+          {/* Attachments */}
+          <Attachments key={task.id} taskId={task.id} isForeign={isForeign} />
 
           {/* Activity timeline */}
           <div className="pt-1 border-t border-border">
