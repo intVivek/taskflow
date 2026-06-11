@@ -32,9 +32,12 @@ export function useUpdateTask() {
     onError: (e, _vars, ctx) => {
       // Restore snapshot
       ctx?.snapshot.forEach(([key, data]) => qc.setQueryData(key, data));
-      // Hook-level toast for non-dialog usage (dialog's per-call onError fires separately)
-      const err = e as ApiError;
-      toast.error(err.message ?? "Couldn't save — change rolled back");
+      // Field-level validation errors are surfaced inline by the edit dialog;
+      // toasting them here would double-report.
+      if (e instanceof ApiError && e.fields && Object.keys(e.fields).length > 0) {
+        return;
+      }
+      toast.error(e.message || "Couldn't save — change rolled back");
     },
 
     onSettled: () => {
