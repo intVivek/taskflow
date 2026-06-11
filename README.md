@@ -3,8 +3,13 @@
 Full-stack task management application — Go 1.25 API, Next.js 15 frontend, Postgres 16. Every required feature and all 8 bonus items are implemented.
 
 **Live:**
-- Frontend (Vercel): _Deployment in progress — link lands here_
-- API (Render): _Deployment in progress — link lands here_
+- Frontend (Vercel): **https://rival.itsvivek.me**
+- API (Render): **https://taskflow-api-c0kt.onrender.com** ([health check](https://taskflow-api-c0kt.onrender.com/healthz))
+- Database: Neon (managed Postgres)
+
+> The API runs on Render's free tier, which spins down after ~15 minutes of inactivity — the first request after idle can take up to ~50 seconds while the instance cold-starts. Subsequent requests are fast.
+
+**Demo accounts:** `demo@taskflow.dev` / `taskflow-demo-123` (12 sample tasks) · `admin@taskflow.dev` / `taskflow-demo-123` (admin — "All tasks" view)
 
 > Render free tier cold-starts take ~50 s; the first request after inactivity will be slow.
 
