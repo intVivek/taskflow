@@ -31,8 +31,13 @@ func (s *Server) handleListActivity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify ownership: task must exist and belong to the authenticated user.
-	_, err := s.st.GetTaskForUser(r.Context(), store.GetTaskForUserParams{ID: id, UserID: claims.UserID})
+	// Verify access: admin may view any task; regular users must own the task.
+	var err error
+	if claims.Role == "admin" {
+		_, err = s.st.GetTask(r.Context(), id)
+	} else {
+		_, err = s.st.GetTaskForUser(r.Context(), store.GetTaskForUserParams{ID: id, UserID: claims.UserID})
+	}
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeError(w, http.StatusNotFound, "not_found", "task not found")

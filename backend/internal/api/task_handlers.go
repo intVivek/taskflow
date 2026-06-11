@@ -21,6 +21,7 @@ var (
 )
 
 // taskDTO is the wire shape; due_date renders as YYYY-MM-DD.
+// owner_email is only populated for admin scope=all responses (omitempty hides it otherwise).
 type taskDTO struct {
 	ID          uuid.UUID `json:"id"`
 	UserID      uuid.UUID `json:"user_id"`
@@ -31,6 +32,7 @@ type taskDTO struct {
 	DueDate     *string   `json:"due_date"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+	OwnerEmail  *string   `json:"owner_email,omitempty"`
 }
 
 func toDTO(t store.Task) taskDTO {
@@ -44,6 +46,12 @@ func toDTO(t store.Task) taskDTO {
 		Status: t.Status, Priority: t.Priority, DueDate: due,
 		CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt,
 	}
+}
+
+func toDTOWithOwner(tw store.TaskWithOwner) taskDTO {
+	dto := toDTO(tw.Task)
+	dto.OwnerEmail = tw.OwnerEmail
+	return dto
 }
 
 func parseDueDate(s string) (*time.Time, bool) {
@@ -146,7 +154,15 @@ func (s *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	t, err := s.st.GetTaskForUser(r.Context(), store.GetTaskForUserParams{ID: id, UserID: claims.UserID})
+	var (
+		t   store.Task
+		err error
+	)
+	if claims.Role == "admin" {
+		t, err = s.st.GetTask(r.Context(), id)
+	} else {
+		t, err = s.st.GetTaskForUser(r.Context(), store.GetTaskForUserParams{ID: id, UserID: claims.UserID})
+	}
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeError(w, http.StatusNotFound, "not_found", "task not found")
@@ -348,6 +364,12 @@ func (s *Server) handleListTasks(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	fields := map[string]string{}
 
+	// scope param: "" (own tasks) or "all" (admin only).
+	scope := q.Get("scope")
+	if scope != "" && scope != "all" {
+		fields["scope"] = `must be "all" or omitted`
+	}
+
 	status := q.Get("status")
 	if status != "" && !validStatus[status] {
 		fields["status"] = "must be one of: todo, in_progress, done"
@@ -389,8 +411,16 @@ func (s *Server) handleListTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// scope=all requires admin role.
+	allUsers := scope == "all"
+	if allUsers && claims.Role != "admin" {
+		writeError(w, http.StatusForbidden, "forbidden", "admin access required")
+		return
+	}
+
 	tasks, total, err := s.st.ListTasks(r.Context(), store.ListTasksParams{
-		UserID: claims.UserID, Status: status, Query: q.Get("q"),
+		UserID: claims.UserID, AllUsers: allUsers,
+		Status: status, Query: q.Get("q"),
 		Sort: sort, Order: order, Limit: limit, Offset: (page - 1) * limit,
 	})
 	if err != nil {
@@ -398,8 +428,8 @@ func (s *Server) handleListTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	dtos := make([]taskDTO, len(tasks))
-	for i, t := range tasks {
-		dtos[i] = toDTO(t)
+	for i, tw := range tasks {
+		dtos[i] = toDTOWithOwner(tw)
 	}
 	totalPages := int((total + int64(limit) - 1) / int64(limit))
 	writeJSON(w, http.StatusOK, listEnvelope{Data: dtos, Meta: listMeta{
