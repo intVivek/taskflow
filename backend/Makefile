@@ -7,6 +7,7 @@ dev:
 	go run ./cmd/api
 
 test:
+	go vet ./...
 	go test ./... -count=1
 
 vet:
