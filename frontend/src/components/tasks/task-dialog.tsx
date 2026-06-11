@@ -30,7 +30,11 @@ export function CreateTaskDialog({ open, onClose }: CreateTaskDialogProps) {
       onClose();
     },
     onError: (e) => {
-      setServerError(e as ApiError);
+      const err = e as ApiError;
+      setServerError(err);
+      if (!(err instanceof ApiError) || !err.fields || Object.keys(err.fields).length === 0) {
+        toast.error(err.message ?? "Something went wrong");
+      }
     },
   });
 
@@ -95,7 +99,11 @@ export function EditTaskDialog({ task, open, onClose }: EditTaskDialogProps) {
       onClose();
     },
     onError: (e) => {
-      setServerError(e as ApiError);
+      const err = e as ApiError;
+      setServerError(err);
+      if (!(err instanceof ApiError) || !err.fields || Object.keys(err.fields).length === 0) {
+        toast.error(err.message ?? "Something went wrong");
+      }
     },
   });
 

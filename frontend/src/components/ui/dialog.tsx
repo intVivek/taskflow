@@ -35,12 +35,28 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
     };
   }, [open]);
 
-  // Focus first focusable element when dialog opens
+  // Capture opener element and restore focus on close
+  const openerRef = useRef<Element | null>(null);
+  useEffect(() => {
+    if (open) {
+      openerRef.current = document.activeElement;
+    } else {
+      const opener = openerRef.current as HTMLElement | null;
+      if (opener && opener.isConnected) {
+        opener.focus();
+      }
+      openerRef.current = null;
+    }
+  }, [open]);
+
+  // Focus autofocus element (or first focusable) when dialog opens
   useEffect(() => {
     if (!open) return;
     const panel = panelRef.current;
     if (!panel) return;
-    const el = panel.querySelector<HTMLElement>(FOCUSABLE);
+    const el =
+      panel.querySelector<HTMLElement>("[autofocus]") ??
+      panel.querySelector<HTMLElement>(FOCUSABLE);
     el?.focus();
   }, [open]);
 
