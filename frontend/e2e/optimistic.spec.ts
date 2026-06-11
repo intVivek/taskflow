@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 const TEST_EMAIL = "playwright@test.com";
 const TEST_PASSWORD = "Test1234!";
 const BASE = "http://localhost:3001";
-const API_BASE = "http://localhost:8081";
+const API_BASE = "http://localhost:8082";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -48,7 +48,8 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
     (toggleMutation.variables as Task | undefined)?.id === task.id;
 
   // A task is "foreign" if it has an owner_email and doesn't belong to the current user
-  const isForeign = Boolean(task.owner_email && me && task.user_id !== me.id);
+  // Treat unresolved user as foreign so controls never flash editable in scope=all
+  const isForeign = Boolean(task.owner_email) && (!me || task.user_id !== me.id);
 
   function handleRowClick() {
     onOpenPanel?.(task);

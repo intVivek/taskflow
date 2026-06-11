@@ -69,7 +69,8 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
   const isOpen = task !== null;
 
   // A task is "foreign" if it has an owner_email and doesn't belong to the current user
-  const isForeign = Boolean(task && task.owner_email && me && task.user_id !== me.id);
+  // Treat unresolved user as foreign so controls never flash editable in scope=all
+  const isForeign = Boolean(task && task.owner_email) && (!me || (task !== null && task.user_id !== me.id));
 
   // Body scroll lock
   useEffect(() => {
