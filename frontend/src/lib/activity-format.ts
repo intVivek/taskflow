@@ -39,7 +39,9 @@ function formatDateString(yyyymmdd: string): string {
   const year = parseInt(yearStr, 10);
   const month = parseInt(monthStr, 10); // 1-indexed
   const day = parseInt(dayStr, 10);
-  if (isNaN(year) || isNaN(month) || isNaN(day)) return yyyymmdd;
+  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 1 || month > 12) {
+    return yyyymmdd;
+  }
   return `${MONTH_ABBR[month - 1]} ${day}, ${year}`;
 }
 

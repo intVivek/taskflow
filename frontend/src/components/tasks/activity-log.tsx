@@ -57,7 +57,7 @@ function ActivityItem({ entry, isFirst, isLast, currentUserEmail }: ActivityItem
   const relativeTime = formatRelative(entry.created_at);
 
   return (
-    <div className="flex gap-3 relative">
+    <div role="listitem" className="flex gap-3 relative">
       {/* Timeline spine */}
       <div className="flex flex-col items-center shrink-0 w-4">
         {/* Dot */}
@@ -174,7 +174,7 @@ export function ActivityLog({ taskId }: ActivityLogProps) {
       ) : (
         <>
           {/* Timeline */}
-          <div className="flex flex-col gap-0">
+          <div role="list" className="flex flex-col gap-0">
             {displayed.map((entry, idx) => (
               <ActivityItem
                 key={entry.id}

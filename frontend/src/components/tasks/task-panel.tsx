@@ -279,7 +279,7 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
 
           {/* Activity timeline */}
           <div className="pt-1 border-t border-border">
-            <ActivityLog taskId={task.id} />
+            <ActivityLog key={task.id} taskId={task.id} />
           </div>
 
           {/* Timestamps */}
