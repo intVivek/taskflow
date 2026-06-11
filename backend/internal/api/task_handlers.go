@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -60,10 +61,10 @@ type createTaskReq struct {
 
 func (req *createTaskReq) validate() (map[string]string, *time.Time) {
 	fields := map[string]string{}
-	if req.Title == "" || len(req.Title) > 200 {
+	if req.Title == "" || utf8.RuneCountInString(req.Title) > 200 {
 		fields["title"] = "is required and must be at most 200 characters"
 	}
-	if len(req.Description) > 5000 {
+	if utf8.RuneCountInString(req.Description) > 5000 {
 		fields["description"] = "must be at most 5000 characters"
 	}
 	if req.Status == "" {
@@ -151,10 +152,10 @@ type updateTaskReq struct {
 
 func (req *updateTaskReq) validate() (map[string]string, *time.Time) {
 	fields := map[string]string{}
-	if req.Title.Set && (req.Title.Value == nil || *req.Title.Value == "" || len(*req.Title.Value) > 200) {
+	if req.Title.Set && (req.Title.Value == nil || *req.Title.Value == "" || utf8.RuneCountInString(*req.Title.Value) > 200) {
 		fields["title"] = "is required and must be at most 200 characters"
 	}
-	if req.Description.Set && req.Description.Value != nil && len(*req.Description.Value) > 5000 {
+	if req.Description.Set && req.Description.Value != nil && utf8.RuneCountInString(*req.Description.Value) > 5000 {
 		fields["description"] = "must be at most 5000 characters"
 	}
 	if req.Status.Set && (req.Status.Value == nil || !validStatus[*req.Status.Value]) {
