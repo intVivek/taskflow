@@ -11,6 +11,7 @@ export interface Task {
   due_date: string | null; // YYYY-MM-DD
   created_at: string;
   updated_at: string;
+  owner_email?: string;   // present only in scope=all responses
 }
 
 export interface User {
