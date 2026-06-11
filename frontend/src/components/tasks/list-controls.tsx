@@ -143,11 +143,9 @@ export function ListControls() {
               onClick={clearSearch}
               aria-label="Clear search"
               className="
-                absolute right-2 top-1/2 -translate-y-1/2
+                absolute right-0 top-1/2 -translate-y-1/2 p-2
                 text-text-muted hover:text-text
                 transition-colors duration-150 cursor-pointer
-                /* min 44px tap target */
-                p-2 -m-2
               "
             >
               <X size={13} />
