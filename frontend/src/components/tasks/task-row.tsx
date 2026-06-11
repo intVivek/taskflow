@@ -50,6 +50,7 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
   }
 
   function handleRowKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.target !== e.currentTarget) return;
     if ((e.key === "Enter" || e.key === " ") && !editOpen) {
       e.preventDefault();
       onOpenPanel?.(task);
@@ -177,13 +178,6 @@ export function TaskRow({ task, onOpenPanel }: TaskRowProps) {
         onClose={() => setEditOpen(false)}
       />
 
-      {/* Inline keyframe for check animation */}
-      <style>{`
-        @keyframes checkPop {
-          from { transform: scale(0); opacity: 0; }
-          to   { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
     </>
   );
 }

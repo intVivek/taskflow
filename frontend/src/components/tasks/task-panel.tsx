@@ -60,6 +60,7 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<Element | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const toggleMutation = useToggleComplete();
 
   const isOpen = task !== null;
@@ -99,15 +100,15 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
     el?.focus();
   }, [isOpen]);
 
-  // Esc to close (but don't close if edit dialog is open — dialog handles its own Esc)
+  // Esc to close (but don't close if edit dialog or delete-confirm is open)
   useEffect(() => {
-    if (!isOpen || editOpen) return;
+    if (!isOpen || editOpen || confirmOpen) return;
     function onKeyDown(e: globalThis.KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, onClose, editOpen]);
+  }, [isOpen, onClose, editOpen, confirmOpen]);
 
   // Focus trap
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -299,6 +300,7 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
             taskId={task.id}
             onDeleted={onClose}
             triggerClassName="opacity-100"
+            onOpenChange={setConfirmOpen}
           />
           <Button
             type="button"
@@ -321,17 +323,6 @@ export function TaskPanel({ task, onClose }: TaskPanelProps) {
         onClose={() => setEditOpen(false)}
       />
 
-      {/* Keyframe animations (injected once via style tag) */}
-      <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(100%); }
-          to   { transform: translateX(0); }
-        }
-        @keyframes checkPop {
-          from { transform: scale(0); opacity: 0; }
-          to   { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
     </>
   );
 }

@@ -8,6 +8,7 @@ import type { Task } from "@/lib/types";
 import { TaskFormValues } from "@/lib/task-schema";
 import { Dialog } from "@/components/ui/dialog";
 import { TaskForm } from "./task-form";
+import { useUpdateTask } from "@/hooks/use-task-mutations";
 
 // ─── Create dialog ────────────────────────────────────────────────────────────
 
@@ -65,8 +66,8 @@ interface EditTaskDialogProps {
 }
 
 export function EditTaskDialog({ task, open, onClose }: EditTaskDialogProps) {
-  const qc = useQueryClient();
   const [serverError, setServerError] = useState<ApiError | null>(null);
+  const updateTask = useUpdateTask();
 
   const initialValues: TaskFormValues = {
     title: task.title,
@@ -76,8 +77,11 @@ export function EditTaskDialog({ task, open, onClose }: EditTaskDialogProps) {
     due_date: task.due_date ?? null,
   };
 
-  const mutation = useMutation({
-    mutationFn: (v: TaskFormValues) => {
+  // Wrap useUpdateTask with local serverError / field-mapping logic
+  const mutation = {
+    isPending: updateTask.isPending,
+    reset: updateTask.reset,
+    mutate: (v: TaskFormValues) => {
       // Compute diff — only send changed fields
       const diff: Partial<TaskFormValues> = {};
       (Object.keys(v) as (keyof TaskFormValues)[]).forEach((key) => {
@@ -88,24 +92,30 @@ export function EditTaskDialog({ task, open, onClose }: EditTaskDialogProps) {
       });
       // If nothing changed, skip the request and resolve immediately
       if (Object.keys(diff).length === 0) {
-        return Promise.resolve(task);
+        toast.success("Task updated");
+        setServerError(null);
+        onClose();
+        return;
       }
-      return api<Task>(`/tasks/${task.id}`, { method: "PATCH", body: diff });
+      updateTask.mutate(
+        { id: task.id, patch: diff },
+        {
+          onSuccess: () => {
+            toast.success("Task updated");
+            setServerError(null);
+            onClose();
+          },
+          onError: (e) => {
+            const err = e as ApiError;
+            setServerError(err);
+            if (!(err instanceof ApiError) || !err.fields || Object.keys(err.fields).length === 0) {
+              toast.error(err.message ?? "Something went wrong");
+            }
+          },
+        },
+      );
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Task updated");
-      setServerError(null);
-      onClose();
-    },
-    onError: (e) => {
-      const err = e as ApiError;
-      setServerError(err);
-      if (!(err instanceof ApiError) || !err.fields || Object.keys(err.fields).length === 0) {
-        toast.error(err.message ?? "Something went wrong");
-      }
-    },
-  });
+  };
 
   function handleClose() {
     setServerError(null);

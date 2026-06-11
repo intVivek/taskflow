@@ -5,6 +5,29 @@ import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import type { Task } from "@/lib/types";
 
+// ─── Update task (patch) ──────────────────────────────────────────────────────
+
+interface UpdateTaskInput {
+  id: string;
+  patch: Partial<Omit<Task, "id" | "created_at" | "updated_at">>;
+}
+
+export function useUpdateTask() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, patch }: UpdateTaskInput) =>
+      api<Task>(`/tasks/${id}`, { method: "PATCH", body: patch }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (e) => {
+      const err = e as ApiError;
+      toast.error(err.message ?? "Failed to update task");
+    },
+  });
+}
+
 // ─── Toggle complete ──────────────────────────────────────────────────────────
 
 export function useToggleComplete() {

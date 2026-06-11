@@ -4,6 +4,7 @@ import {
   useState,
   useRef,
   useEffect,
+  useCallback,
   KeyboardEvent,
 } from "react";
 import { Trash2 } from "lucide-react";
@@ -16,6 +17,8 @@ interface DeleteConfirmProps {
   onDeleted?: () => void;
   /** Extra class on the trigger trash button. */
   triggerClassName?: string;
+  /** Called when the confirm strip opens or closes, so parents can suppress their own Esc handler. */
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -27,17 +30,31 @@ export function DeleteConfirm({
   taskId,
   onDeleted,
   triggerClassName = "",
+  onOpenChange,
 }: DeleteConfirmProps) {
   const [open, setOpen] = useState(false);
+
+  const changeOpen = useCallback(
+    (value: boolean) => {
+      setOpen(value);
+      onOpenChange?.(value);
+    },
+    [onOpenChange],
+  );
   const confirmRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef(false);
   const deleteMutation = useDeleteTask();
 
-  // When the confirm strip opens, focus the confirm button
+  // When the confirm strip opens, focus the confirm button;
+  // when it closes and returnFocusRef is set, restore focus to the trigger.
   useEffect(() => {
     if (open) {
       confirmRef.current?.focus();
+    } else if (returnFocusRef.current) {
+      returnFocusRef.current = false;
+      triggerRef.current?.focus();
     }
   }, [open]);
 
@@ -49,34 +66,34 @@ export function DeleteConfirm({
         containerRef.current &&
         !containerRef.current.contains(e.relatedTarget as Node | null)
       ) {
-        setOpen(false);
+        changeOpen(false);
       }
     }
     const el = containerRef.current;
     el?.addEventListener("focusout", onFocusOut);
     return () => el?.removeEventListener("focusout", onFocusOut);
-  }, [open]);
+  }, [open, changeOpen]);
 
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (e.key === "Escape") {
       e.stopPropagation();
-      setOpen(false);
-      triggerRef.current?.focus();
+      returnFocusRef.current = true;
+      changeOpen(false);
     }
   }
 
   function handleConfirm() {
     deleteMutation.mutate(taskId, {
       onSuccess: () => {
-        setOpen(false);
+        changeOpen(false);
         onDeleted?.();
       },
     });
   }
 
   function handleCancel() {
-    setOpen(false);
-    triggerRef.current?.focus();
+    returnFocusRef.current = true;
+    changeOpen(false);
   }
 
   if (open) {
@@ -123,7 +140,7 @@ export function DeleteConfirm({
       aria-label="Delete task"
       onClick={(e) => {
         e.stopPropagation();
-        setOpen(true);
+        changeOpen(true);
       }}
       className={`
         inline-flex items-center justify-center
