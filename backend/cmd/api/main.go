@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -32,7 +33,15 @@ func main() {
 	defer pool.Close()
 	srv := api.New(cfg, store.NewStore(pool))
 	slog.Info("listening", "port", cfg.Port)
-	if err := http.ListenAndServe(":"+cfg.Port, srv.Handler()); err != nil {
+	server := &http.Server{
+		Addr:              ":" + cfg.Port,
+		Handler:           srv.Handler(),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      0, // SSE streaming endpoint arrives later; per-handler deadlines instead
+		IdleTimeout:       120 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		slog.Error("server", "err", err)
 		os.Exit(1)
 	}

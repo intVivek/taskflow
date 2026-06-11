@@ -40,6 +40,7 @@ func (c *credentials) validate() map[string]string {
 }
 
 func decodeBody(w http.ResponseWriter, r *http.Request, v any) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MB
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
 		writeError(w, http.StatusBadRequest, "bad_request", "invalid JSON body")
 		return false
@@ -100,6 +101,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	u, err := s.st.GetUserByEmail(r.Context(), strings.TrimSpace(creds.Email))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			auth.DummyCompare()
 			writeError(w, http.StatusUnauthorized, "invalid_credentials", "invalid email or password")
 			return
 		}

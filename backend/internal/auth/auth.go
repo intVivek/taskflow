@@ -19,6 +19,12 @@ type jwtClaims struct {
 	jwt.RegisteredClaims
 }
 
+// dummyHash is a bcrypt hash of an unguessable random string, used to
+// equalize login timing when the email does not exist.
+var dummyHash, _ = HashPassword("timing-equalization-dummy")
+
+func DummyCompare() { _ = CheckPassword(dummyHash, "not-the-password") }
+
 func HashPassword(pw string) (string, error) {
 	b, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
 	return string(b), err
