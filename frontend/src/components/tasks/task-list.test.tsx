@@ -145,7 +145,7 @@ describe("TaskList", () => {
     expect(retryButton).toBeInTheDocument();
 
     // Count only the /tasks calls (not /auth/me)
-    const tasksCalls = () => mockApi.mock.calls.filter(([path]: [string]) => path !== "/auth/me");
+    const tasksCalls = () => mockApi.mock.calls.filter((args: unknown[]) => args[0] !== "/auth/me");
     expect(tasksCalls()).toHaveLength(1);
 
     // Click Retry → triggers a refetch → second /tasks api call
