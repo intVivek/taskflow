@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Task struct {
@@ -20,6 +21,15 @@ type Task struct {
 	DueDate     *time.Time `json:"due_date"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
+}
+
+type TaskActivity struct {
+	ID        int64       `json:"id"`
+	TaskID    uuid.UUID   `json:"task_id"`
+	ActorID   pgtype.UUID `json:"actor_id"`
+	Action    string      `json:"action"`
+	Changes   []byte      `json:"changes"`
+	CreatedAt time.Time   `json:"created_at"`
 }
 
 type User struct {

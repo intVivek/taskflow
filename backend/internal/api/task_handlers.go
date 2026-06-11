@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"taskflow/internal/store"
 )
@@ -103,9 +105,22 @@ func (s *Server) handleCreateTask(w http.ResponseWriter, r *http.Request) {
 		writeValidationError(w, fields)
 		return
 	}
-	t, err := s.st.CreateTask(r.Context(), store.CreateTaskParams{
-		UserID: claims.UserID, Title: req.Title, Description: req.Description,
-		Status: req.Status, Priority: req.Priority, DueDate: due,
+	var t store.Task
+	err := s.st.InTx(r.Context(), func(q *store.Queries) error {
+		var txErr error
+		t, txErr = q.CreateTask(r.Context(), store.CreateTaskParams{
+			UserID: claims.UserID, Title: req.Title, Description: req.Description,
+			Status: req.Status, Priority: req.Priority, DueDate: due,
+		})
+		if txErr != nil {
+			return txErr
+		}
+		return q.InsertActivity(r.Context(), store.InsertActivityParams{
+			TaskID:  t.ID,
+			ActorID: pgtype.UUID{Bytes: claims.UserID, Valid: true},
+			Action:  "created",
+			Changes: nil,
+		})
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "could not create task")
@@ -179,6 +194,78 @@ func (req *updateTaskReq) validate() (map[string]string, *time.Time) {
 	return fields, nil
 }
 
+// dueDateStr converts a *time.Time due date to a *string "YYYY-MM-DD" for diff comparisons.
+func dueDateStr(d *time.Time) *string {
+	if d == nil {
+		return nil
+	}
+	s := d.Format("2006-01-02")
+	return &s
+}
+
+// truncate80 truncates a string to 80 runes and appends "…" if it was longer.
+func truncate80(s string) string {
+	runes := []rune(s)
+	if len(runes) <= 80 {
+		return s
+	}
+	return string(runes[:80]) + "…"
+}
+
+// buildUpdateDiff computes a field-level diff between pre and post task state
+// given the update request. Returns nil if nothing changed.
+func buildUpdateDiff(pre store.Task, post store.Task, req updateTaskReq) map[string]map[string]any {
+	diff := map[string]map[string]any{}
+
+	if req.Title.Set && post.Title != pre.Title {
+		diff["title"] = map[string]any{"from": pre.Title, "to": post.Title}
+	}
+	if req.Description.Set && post.Description != pre.Description {
+		diff["description"] = map[string]any{
+			"from": truncate80(pre.Description),
+			"to":   truncate80(post.Description),
+		}
+	}
+	if req.Status.Set && post.Status != pre.Status {
+		diff["status"] = map[string]any{"from": pre.Status, "to": post.Status}
+	}
+	if req.Priority.Set && post.Priority != pre.Priority {
+		diff["priority"] = map[string]any{"from": pre.Priority, "to": post.Priority}
+	}
+	if req.DueDate.Set {
+		preStr := dueDateStr(pre.DueDate)
+		postStr := dueDateStr(post.DueDate)
+		// Compare string representations; both nil means no change.
+		preVal := (*string)(nil)
+		postVal := (*string)(nil)
+		if preStr != nil {
+			preVal = preStr
+		}
+		if postStr != nil {
+			postVal = postStr
+		}
+		changed := (preVal == nil) != (postVal == nil)
+		if !changed && preVal != nil {
+			changed = *preVal != *postVal
+		}
+		if changed {
+			var fromAny, toAny any
+			if preVal != nil {
+				fromAny = *preVal
+			}
+			if postVal != nil {
+				toAny = *postVal
+			}
+			diff["due_date"] = map[string]any{"from": fromAny, "to": toAny}
+		}
+	}
+
+	if len(diff) == 0 {
+		return nil
+	}
+	return diff
+}
+
 func (s *Server) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 	claims := claimsFrom(r.Context())
 	id, ok := taskID(w, r)
@@ -194,11 +281,36 @@ func (s *Server) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 		writeValidationError(w, fields)
 		return
 	}
-	t, err := s.st.UpdateTaskForUser(r.Context(), store.UpdateTaskForUserParams{
-		ID: id, UserID: claims.UserID,
-		Title: req.Title.Value, Description: req.Description.Value,
-		Status: req.Status.Value, Priority: req.Priority.Value,
-		DueDateSet: req.DueDate.Set, DueDate: due,
+	var t store.Task
+	err := s.st.InTx(r.Context(), func(q *store.Queries) error {
+		pre, txErr := q.GetTaskForUser(r.Context(), store.GetTaskForUserParams{ID: id, UserID: claims.UserID})
+		if txErr != nil {
+			return txErr
+		}
+		t, txErr = q.UpdateTaskForUser(r.Context(), store.UpdateTaskForUserParams{
+			ID: id, UserID: claims.UserID,
+			Title: req.Title.Value, Description: req.Description.Value,
+			Status: req.Status.Value, Priority: req.Priority.Value,
+			DueDateSet: req.DueDate.Set, DueDate: due,
+		})
+		if txErr != nil {
+			return txErr
+		}
+		diff := buildUpdateDiff(pre, t, req)
+		if diff == nil {
+			// No meaningful change — skip activity entry.
+			return nil
+		}
+		changesJSON, txErr := json.Marshal(diff)
+		if txErr != nil {
+			return txErr
+		}
+		return q.InsertActivity(r.Context(), store.InsertActivityParams{
+			TaskID:  id,
+			ActorID: pgtype.UUID{Bytes: claims.UserID, Valid: true},
+			Action:  "updated",
+			Changes: changesJSON,
+		})
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -217,6 +329,8 @@ func (s *Server) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// No activity insertion needed: task_activity rows cascade-delete with the task
+	// (ON DELETE CASCADE), so there is nothing to preserve.
 	n, err := s.st.DeleteTaskForUser(r.Context(), store.DeleteTaskForUserParams{ID: id, UserID: claims.UserID})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal", "could not delete task")

@@ -38,4 +38,5 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /tasks/{id}", s.requireAuth(s.handleGetTask))
 	s.mux.HandleFunc("PATCH /tasks/{id}", s.requireAuth(s.handleUpdateTask))
 	s.mux.HandleFunc("DELETE /tasks/{id}", s.requireAuth(s.handleDeleteTask))
+	s.mux.HandleFunc("GET /tasks/{id}/activity", s.requireAuth(s.handleListActivity))
 }
