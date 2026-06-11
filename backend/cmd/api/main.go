@@ -12,6 +12,7 @@ import (
 	"taskflow/db"
 	"taskflow/internal/api"
 	"taskflow/internal/config"
+	"taskflow/internal/events"
 	"taskflow/internal/store"
 )
 
@@ -31,7 +32,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer pool.Close()
-	srv := api.New(cfg, store.NewStore(pool))
+	srv := api.New(cfg, store.NewStore(pool), events.NewHub())
 	slog.Info("listening", "port", cfg.Port)
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,

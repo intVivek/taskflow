@@ -16,6 +16,7 @@ import (
 	"taskflow/db"
 	"taskflow/internal/api"
 	"taskflow/internal/config"
+	"taskflow/internal/events"
 	"taskflow/internal/store"
 )
 
@@ -51,7 +52,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	st := store.NewStore(testPool)
-	testHandler = api.New(config.Config{JWTSecret: "test-secret", Env: "test"}, st).Handler()
+	testHandler = api.New(config.Config{JWTSecret: "test-secret", Env: "test"}, st, events.NewHub()).Handler()
 
 	code := m.Run()
 	testPool.Close()

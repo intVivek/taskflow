@@ -134,7 +134,9 @@ func (s *Server) handleCreateTask(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal", "could not create task")
 		return
 	}
-	writeJSON(w, http.StatusCreated, toDTO(t))
+	dto := toDTO(t)
+	writeJSON(w, http.StatusCreated, dto)
+	publishTaskEvent(s, claims.UserID, "task.created", &dto, t.ID)
 }
 
 // taskID parses the {id} path segment; writes 404 on malformed UUIDs
@@ -336,7 +338,9 @@ func (s *Server) handleUpdateTask(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal", "could not update task")
 		return
 	}
-	writeJSON(w, http.StatusOK, toDTO(t))
+	dto := toDTO(t)
+	writeJSON(w, http.StatusOK, dto)
+	publishTaskEvent(s, claims.UserID, "task.updated", &dto, t.ID)
 }
 
 func (s *Server) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
@@ -357,6 +361,7 @@ func (s *Server) handleDeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+	publishTaskEvent(s, claims.UserID, "task.deleted", nil, id)
 }
 
 func (s *Server) handleListTasks(w http.ResponseWriter, r *http.Request) {

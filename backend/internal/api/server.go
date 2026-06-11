@@ -4,17 +4,19 @@ import (
 	"net/http"
 
 	"taskflow/internal/config"
+	"taskflow/internal/events"
 	"taskflow/internal/store"
 )
 
 type Server struct {
 	cfg config.Config
 	st  *store.Store
+	hub *events.Hub
 	mux *http.ServeMux
 }
 
-func New(cfg config.Config, st *store.Store) *Server {
-	s := &Server{cfg: cfg, st: st, mux: http.NewServeMux()}
+func New(cfg config.Config, st *store.Store, hub *events.Hub) *Server {
+	s := &Server{cfg: cfg, st: st, hub: hub, mux: http.NewServeMux()}
 	s.routes()
 	return s
 }
@@ -39,4 +41,6 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("PATCH /tasks/{id}", s.requireAuth(s.handleUpdateTask))
 	s.mux.HandleFunc("DELETE /tasks/{id}", s.requireAuth(s.handleDeleteTask))
 	s.mux.HandleFunc("GET /tasks/{id}/activity", s.requireAuth(s.handleListActivity))
+
+	s.mux.HandleFunc("GET /events", s.requireAuth(s.handleEvents))
 }
