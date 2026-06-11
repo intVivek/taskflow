@@ -25,7 +25,6 @@ func Migrate(databaseURL string) error {
 	if err != nil {
 		return fmt.Errorf("open db: %w", err)
 	}
-	defer sqlDB.Close()
 	driver, err := postgres.WithInstance(sqlDB, &postgres.Config{})
 	if err != nil {
 		return fmt.Errorf("migrate driver: %w", err)
@@ -34,6 +33,7 @@ func Migrate(databaseURL string) error {
 	if err != nil {
 		return fmt.Errorf("migrate init: %w", err)
 	}
+	defer m.Close()
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return fmt.Errorf("migrate up: %w", err)
 	}

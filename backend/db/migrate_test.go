@@ -30,7 +30,7 @@ func TestMigrate(t *testing.T) {
 	defer conn.Close(context.Background())
 	var n int
 	if err := conn.QueryRow(context.Background(),
-		`SELECT count(*) FROM information_schema.tables WHERE table_name IN ('users','tasks')`).Scan(&n); err != nil {
+		`SELECT count(*) FROM information_schema.tables WHERE table_name IN ('users','tasks') AND table_schema = 'public' AND table_type = 'BASE TABLE'`).Scan(&n); err != nil {
 		t.Fatal(err)
 	}
 	if n != 2 {
