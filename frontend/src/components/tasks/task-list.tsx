@@ -20,13 +20,14 @@ import type { Task } from "@/lib/types";
 
 export function TaskList() {
   const params = useTaskParams();
-  const { status, q, sort, order, page } = params;
+  const { status, q, sort, order, page, scope } = params;
   const { data, isLoading, isError, error, refetch, isFetching } = useTasks({
     status,
     q,
     sort,
     order,
     page,
+    scope,
   });
   const [createOpen, setCreateOpen] = useState(false);
   // Snapshot of the task the panel was opened with

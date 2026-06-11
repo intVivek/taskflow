@@ -11,13 +11,14 @@ export interface UseTasksParams {
   sort?: string;
   order?: string;
   page?: number;
+  scope?: string;
 }
 
-export function useTasks({ status, q, sort, order, page }: UseTasksParams) {
-  const qs = buildQuery({ status, q, sort, order, page }, {});
+export function useTasks({ status, q, sort, order, page, scope }: UseTasksParams) {
+  const qs = buildQuery({ status, q, sort, order, page, scope }, {});
 
   return useQuery<TaskList, ApiError>({
-    queryKey: ["tasks", { status, q, sort, order, page }],
+    queryKey: ["tasks", { status, q, sort, order, page, scope }],
     queryFn: ({ signal }) => api<TaskList>(`/tasks${qs}`, { signal }),
     placeholderData: keepPreviousData,
   });
