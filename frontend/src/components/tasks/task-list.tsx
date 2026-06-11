@@ -71,8 +71,14 @@ export function TaskList() {
       {/* Controls */}
       <ListControls />
 
-      {/* Content area */}
-      <div className="bg-surface border border-border rounded-lg overflow-hidden">
+      {/* Content area — dimmed while a refetch (e.g. page change) is in flight
+          so slow networks read as "loading", not "stuck" */}
+      <div
+        className={`bg-surface border border-border rounded-lg overflow-hidden transition-opacity duration-200 ${
+          isFetching && !isLoading ? "opacity-50" : "opacity-100"
+        }`}
+        aria-busy={isFetching && !isLoading}
+      >
         {isLoading ? (
           <SkeletonRows n={8} />
         ) : isError ? (
@@ -97,7 +103,7 @@ export function TaskList() {
       {/* Pagination */}
       {meta && meta.total_pages > 1 && !isLoading && !isError && (
         <div className="bg-surface border border-border rounded-lg overflow-hidden">
-          <Pagination meta={meta} />
+          <Pagination meta={meta} loading={isFetching} />
         </div>
       )}
 
