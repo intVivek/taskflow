@@ -17,7 +17,8 @@ import { toast } from "sonner";
 
 export function TaskList() {
   const params = useTaskParams();
-  const { data, isLoading, isError, error, refetch, isFetching } = useTasks(params);
+  const { status, q, sort, order, page } = params;
+  const { data, isLoading, isError, error, refetch, isFetching } = useTasks({ status, q, sort, order, page });
 
   function handleNewTask() {
     toast.info("Create form arrives in the next step");

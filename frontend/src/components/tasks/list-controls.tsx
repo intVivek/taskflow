@@ -67,13 +67,15 @@ export function ListControls() {
   return (
     <div className="space-y-3">
       {/* Status tabs */}
-      <div className="flex items-center border-b border-border">
+      <div role="tablist" aria-label="Filter by status" className="flex items-center border-b border-border">
         {STATUS_TABS.map((tab) => {
           const isActive = (status ?? "") === tab.value;
           return (
             <button
               key={tab.value}
               type="button"
+              role="tab"
+              aria-selected={isActive}
               onClick={() => set({ status: tab.value })}
               className={`
                 px-3 pb-2.5 pt-1 text-sm font-medium transition-colors duration-150 cursor-pointer
@@ -105,6 +107,7 @@ export function ListControls() {
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             placeholder="Search tasks…"
+            aria-label="Search tasks"
             className="
               w-full h-8 pl-8 pr-8 rounded-md text-sm
               bg-surface text-text
