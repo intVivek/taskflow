@@ -17,8 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CreateTaskDialog } from "./task-dialog";
 import type { Task } from "@/lib/types";
+import { useTaskEvents } from "@/hooks/use-task-events";
 
 export function TaskList() {
+  useTaskEvents();
   const params = useTaskParams();
   const { status, q, sort, order, page, scope } = params;
   const { data, isLoading, isError, error, refetch, isFetching } = useTasks({

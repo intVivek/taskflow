@@ -5,6 +5,14 @@ import { TaskList } from "./task-list";
 import { renderWithProviders, createTestQueryClient } from "@/test/utils";
 import type { TaskList as TaskListData } from "@/lib/types";
 
+// ─── useTaskEvents mock ───────────────────────────────────────────────────────
+
+// TaskList calls useTaskEvents() which opens an EventSource. jsdom doesn't
+// implement EventSource, so we no-op the hook in these component tests.
+vi.mock("@/hooks/use-task-events", () => ({
+  useTaskEvents: vi.fn(),
+}));
+
 // ─── next/navigation mock ─────────────────────────────────────────────────────
 
 // Module-level variable so individual tests can swap the searchParams value.
