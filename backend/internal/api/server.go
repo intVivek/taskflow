@@ -42,5 +42,10 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("DELETE /tasks/{id}", s.requireAuth(s.handleDeleteTask))
 	s.mux.HandleFunc("GET /tasks/{id}/activity", s.requireAuth(s.handleListActivity))
 
+	s.mux.HandleFunc("POST /tasks/{id}/attachments", s.requireAuth(s.handleUploadAttachment))
+	s.mux.HandleFunc("GET /tasks/{id}/attachments", s.requireAuth(s.handleListAttachments))
+	s.mux.HandleFunc("GET /attachments/{id}", s.requireAuth(s.handleDownloadAttachment))
+	s.mux.HandleFunc("DELETE /attachments/{id}", s.requireAuth(s.handleDeleteAttachment))
+
 	s.mux.HandleFunc("GET /events", s.requireAuth(s.handleEvents))
 }
