@@ -83,13 +83,9 @@ export function EditTaskDialog({ task, open, onClose }: EditTaskDialogProps) {
     reset: updateTask.reset,
     mutate: (v: TaskFormValues) => {
       // Compute diff — only send changed fields
-      const diff: Partial<TaskFormValues> = {};
-      (Object.keys(v) as (keyof TaskFormValues)[]).forEach((key) => {
-        if (v[key] !== initialValues[key]) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (diff as any)[key] = v[key];
-        }
-      });
+      const diff = (Object.keys(v) as (keyof TaskFormValues)[]).reduce<
+        Partial<TaskFormValues>
+      >((acc, key) => (v[key] !== initialValues[key] ? { ...acc, [key]: v[key] } : acc), {});
       // If nothing changed, skip the request and resolve immediately
       if (Object.keys(diff).length === 0) {
         toast.success("Task updated");

@@ -92,7 +92,7 @@ export function TaskList() {
       </div>
 
       {/* Pagination */}
-      {meta && !isLoading && !isError && (
+      {meta && meta.total_pages > 1 && !isLoading && !isError && (
         <div className="bg-surface border border-border rounded-lg overflow-hidden">
           <Pagination meta={meta} />
         </div>
