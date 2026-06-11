@@ -127,7 +127,6 @@ test.describe("Attachments", () => {
 
     // 12. Delete the attachment: hover attachment row to reveal actions, click delete
     // The attachment item contains the thumbnail; hover its parent container to trigger visibility
-    const attachmentRow = attachmentThumb.locator("xpath=ancestor::div[contains(@class,'flex') and contains(@class,'items-center')]").first();
     // Scroll into view
     await attachmentThumb.scrollIntoViewIfNeeded();
     // Find the delete button by aria-label pattern that includes filename (not "Delete task")

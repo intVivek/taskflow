@@ -8,6 +8,15 @@ import (
 	"taskflow/internal/auth"
 )
 
+// secureHeaders sets defense-in-depth headers on every response; nosniff
+// matters most for the attachment download endpoint serving stored bytes.
+func secureHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {

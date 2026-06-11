@@ -22,7 +22,7 @@ func New(cfg config.Config, st *store.Store, hub *events.Hub) *Server {
 }
 
 func (s *Server) Handler() http.Handler {
-	return recoverPanic(s.mux)
+	return secureHeaders(recoverPanic(s.mux))
 }
 
 func (s *Server) routes() {
