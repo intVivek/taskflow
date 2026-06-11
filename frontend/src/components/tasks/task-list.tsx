@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTaskParams } from "@/hooks/use-task-params";
 import { useTasks } from "@/hooks/use-tasks";
 import { ListControls } from "./list-controls";
@@ -13,16 +14,13 @@ import {
 } from "./list-states";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { toast } from "sonner";
+import { CreateTaskDialog } from "./task-dialog";
 
 export function TaskList() {
   const params = useTaskParams();
   const { status, q, sort, order, page } = params;
   const { data, isLoading, isError, error, refetch, isFetching } = useTasks({ status, q, sort, order, page });
-
-  function handleNewTask() {
-    toast.info("Create form arrives in the next step");
-  }
+  const [createOpen, setCreateOpen] = useState(false);
 
   const tasks = data?.data ?? [];
   const meta = data?.meta;
@@ -45,7 +43,7 @@ export function TaskList() {
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
           )}
         </div>
-        <Button variant="primary" size="sm" onClick={handleNewTask}>
+        <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
           <Plus size={14} />
           New task
         </Button>
@@ -67,7 +65,7 @@ export function TaskList() {
           params.hasActiveFilters ? (
             <EmptyNoMatches />
           ) : (
-            <EmptyNoTasks />
+            <EmptyNoTasks onNewTask={() => setCreateOpen(true)} />
           )
         ) : (
           tasks.map((task) => <TaskRow key={task.id} task={task} />)
@@ -80,6 +78,9 @@ export function TaskList() {
           <Pagination meta={meta} />
         </div>
       )}
+
+      {/* Create dialog */}
+      <CreateTaskDialog open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>
   );
 }

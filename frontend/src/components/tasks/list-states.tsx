@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, SearchX, AlertTriangle } from "lucide-react";
+import { ClipboardList, SearchX, AlertTriangle, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useTaskParams } from "@/hooks/use-task-params";
@@ -39,7 +39,11 @@ export function SkeletonRows({ n = 6 }: SkeletonRowsProps) {
 
 // ─── Empty: no tasks at all ───────────────────────────────────────────────────
 
-export function EmptyNoTasks() {
+interface EmptyNoTasksProps {
+  onNewTask?: () => void;
+}
+
+export function EmptyNoTasks({ onNewTask }: EmptyNoTasksProps) {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
       <div className="mb-4 p-4 rounded-2xl bg-accent-subtle">
@@ -48,9 +52,15 @@ export function EmptyNoTasks() {
       <h3 className="text-base font-semibold text-text mb-1">
         No tasks yet
       </h3>
-      <p className="text-sm text-text-muted max-w-xs">
+      <p className="text-sm text-text-muted max-w-xs mb-4">
         Create your first task to get started. Tasks you add will appear here.
       </p>
+      {onNewTask && (
+        <Button variant="primary" size="sm" onClick={onNewTask}>
+          <Plus size={14} />
+          New task
+        </Button>
+      )}
     </div>
   );
 }
